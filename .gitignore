@@ -6,3 +6,9 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Local working notes
+NOTES.md
+
+# Throwaway recon scratch (screenshots, DOM dumps)
+/.recon-scratch/
