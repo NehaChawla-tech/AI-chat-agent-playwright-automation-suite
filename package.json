@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "End-to-end automated test suite, UX review, and data-layer reasoning for an AI chat agent's pre-login experience. Built with Playwright + TypeScript.",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test:semantic": "playwright test tests/agent.spec.ts -g \"clicking a suggested topic\" --project=chromium && promptfoo eval -c promptfoo/promptfooconfig.yaml"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NehaChawla-tech/sqa-homework-neha-chawla.git"
@@ -17,7 +19,9 @@
   },
   "homepage": "https://github.com/NehaChawla-tech/sqa-homework-neha-chawla#readme",
   "devDependencies": {
+    "@huggingface/transformers": "^4.2.0",
     "@playwright/test": "^1.62.1",
-    "@types/node": "^26.2.0"
+    "@types/node": "^26.2.0",
+    "promptfoo": "^0.122.0"
   }
 }

@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { dismissCookieBanner, waitForAgentResponse, reloadAndWaitForPills } from './helpers';
+import * as fs from 'fs';
+import * as path from 'path';
+import { dismissCookieBanner, waitForAgentResponse, reloadAndWaitForPills, assertSubstantiveOnTopicResponse } from './helpers';
 
 const AGENT_INPUT = 'agent-chat-input';
 
@@ -75,11 +77,30 @@ test.describe('Permission Agent - pre-login chat', () => {
     await waitForAgentResponse(page);
 
     await expect(agentBubbles(page)).toHaveCount(bubbleCountBefore + 1);
-    const responseText = await agentBubbles(page).last().innerText();
-    // Responses are LLM-generated and differ on every run (confirmed in recon), so we
-    // deliberately don't assert exact wording -- only that a real, substantive answer
-    // arrived. Stronger content assertions are a follow-up per the brief.
-    expect(responseText.trim().length).toBeGreaterThan(15);
+    const rawResponseText = await agentBubbles(page).last().innerText();
+    // The bubble's innerText includes its trailing timestamp (e.g. "...\n12:36 AM") since
+    // that's a sibling within the same wrapper div we scope to -- there's no separate
+    // testid to target just the message text. Stripped here so the checks below (and the
+    // DeepEval bridge) look at just the actual answer, not incidental UI chrome.
+    const responseText = rawResponseText.replace(/\n?\d{1,2}:\d{2}\s?(AM|PM)\s*$/i, '').trim();
+    // Responses are LLM-generated and differ on every run (confirmed in recon) -- these
+    // check properties a real answer must have, never exact wording/length/tone/facts,
+    // any of which would make this suite flaky by design. See assertSubstantiveOnTopicResponse
+    // in helpers.ts for why each check exists and what specific breakage it catches.
+    assertSubstantiveOnTopicResponse(responseText, topic.prompt, /permission|data|earn|ask/i);
+
+    // Bridges this one response out to the Promptfoo semantic check (see
+    // promptfoo/README.md). Written here, not asserted on: the plain checks above are the
+    // pass/fail gate for this test itself; this just hands the same real, already-validated
+    // example to a separate embedding-similarity check that catches something regex/keyword
+    // matching structurally can't -- see promptfoo/promptfooconfig.yaml for why.
+    // Two plain-text files, not JSON: promptfoo's `file://` var-loading reads raw file
+    // contents directly into a single var, which is simpler and less error-prone here than
+    // getting a multi-field JSON-to-vars mapping right in YAML for one value we need.
+    const bridgeDir = path.join('test-results', 'semantic-eval');
+    fs.mkdirSync(bridgeDir, { recursive: true });
+    fs.writeFileSync(path.join(bridgeDir, 'question.txt'), topic.prompt);
+    fs.writeFileSync(path.join(bridgeDir, 'response.txt'), responseText);
   });
 
   test('3. submitting a free-text question produces an agent response', async ({ page }) => {

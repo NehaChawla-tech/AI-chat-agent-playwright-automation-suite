@@ -12,3 +12,6 @@ NOTES.md
 
 # Throwaway recon scratch (screenshots, DOM dumps)
 /.recon-scratch/
+
+# Promptfoo local eval cache/history
+/.promptfoo/

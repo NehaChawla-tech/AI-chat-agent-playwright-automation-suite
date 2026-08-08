@@ -1,0 +1,34 @@
+# Semantic check for the "What is Permission" suggested-topic response (test 2 in
+# tests/agent.spec.ts). See promptfoo/README.md for what this catches and how to run it.
+#
+# This does NOT call an LLM to generate a response -- the response already exists (a real,
+# captured answer from the live app, written to test-results/semantic-eval/ by test 2).
+# `providers: [echo]` makes promptfoo return the rendered prompt verbatim as the "output"
+# to grade, instead of sending it to a model -- exactly promptfoo's documented pattern for
+# evaluating pre-generated output.
+# https://www.promptfoo.dev/docs/providers/echo/
+
+prompts:
+  - '{{response}}'
+
+providers:
+  - echo
+
+tests:
+  - vars:
+      response: file://../test-results/semantic-eval/response.txt
+    assert:
+      # `similar`: embedding cosine similarity against a hand-written reference answer,
+      # computed with a fully local model (Xenova/all-MiniLM-L6-v2 via Transformers.js) --
+      # no API key, no external call. https://www.promptfoo.dev/docs/providers/transformers/
+      #
+      # Threshold 0.5 is deliberately loose: this only needs to confirm the response is
+      # broadly *about the same thing* as the reference, not a close paraphrase of it --
+      # exact wording/length/tone/facts are explicitly not the point (see helpers.ts).
+      - type: similar
+        value: >-
+          Permission.ai lets people earn rewards, such as ASK tokens, by choosing to share
+          their personal data on their own terms, with an AI agent managing that on their
+          behalf while keeping them in control of how their data is used.
+        threshold: 0.5
+        provider: transformers:feature-extraction:Xenova/all-MiniLM-L6-v2
