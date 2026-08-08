@@ -4,16 +4,23 @@ import { expect, type Page } from '@playwright/test';
  * Dismisses the OneTrust cookie consent banner if it's present.
  *
  * Safe to call unconditionally: if the banner never shows (e.g. consent was already
- * given earlier in this browser context) we just time out on the `waitFor` and move on,
- * rather than throwing and failing the test.
+ * given earlier in this browser context, as on a post-reload call), this is a no-op.
+ *
+ * Deliberately not `waitFor`/`expect` + try/catch here: those register as a failed step
+ * in the HTML report the moment they time out, even though the failure is caught and
+ * handled -- noisy in a report that's a deliverable, for a state (banner absent) that
+ * isn't actually a problem. `isVisible()` is a single, immediate, non-throwing check, so
+ * we poll it ourselves a few times to give the banner the same ~1s window to render
+ * without ever producing a report step that looks like something broke.
  */
 export async function dismissCookieBanner(page: Page): Promise<void> {
   const acceptButton = page.locator('#onetrust-accept-btn-handler');
-  try {
-    await acceptButton.waitFor({ state: 'visible', timeout: 5000 });
-    await acceptButton.click();
-  } catch {
-    // Banner didn't appear -- nothing to dismiss.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    if (await acceptButton.isVisible()) {
+      await acceptButton.click();
+      return;
+    }
+    await page.waitForTimeout(200);
   }
 }
 

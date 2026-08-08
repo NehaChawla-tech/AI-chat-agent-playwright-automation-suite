@@ -123,4 +123,85 @@ test.describe('Permission Agent - pre-login chat', () => {
     // holds both lines.
     await expect(userBubbles(page)).toHaveCount(bubbleCountBefore);
   });
+
+  test('5. input is disabled while responding and re-enabled afterwards', async ({ page }) => {
+    const input = page.getByTestId(AGENT_INPUT);
+    await expect(input).toBeEnabled(); // baseline: beforeEach already waited out the greeting
+
+    await input.fill('What is Permission.ai?');
+    await input.press('Enter');
+
+    // Deliberately asserting directly here instead of calling waitForAgentResponse: this
+    // test's entire purpose is to pin down that exact contract (disabled -> enabled) as its
+    // own named requirement, not just as plumbing for a content check. Tests 2/3 exercise
+    // this indirectly via the helper, but a break here would surface there as a vague
+    // "response never arrived" failure -- this test names the actual mechanism, which is
+    // the app's own concurrency guard against firing a second question at a
+    // non-deterministic backend before the first has resolved.
+    await expect(input).toBeDisabled({ timeout: 5000 });
+    await expect(input).toBeEnabled({ timeout: 30000 });
+  });
+
+  test('6. suggested-topic pills disappear after clicking one and do not return', async ({ page }) => {
+    // Ties directly to the render-gate bug documented in NOTES.md: the pills are gated on
+    // the conversation having zero messages, so adding a user message should close that
+    // gate immediately. This is the "disappear correctly" counterpart to test 1 ("appear
+    // correctly") -- not covered by tests 1/2, which only assert pills showing up.
+    await reloadAndWaitForPills(page);
+
+    const topic = SUGGESTED_TOPICS[0];
+    await page.getByRole('button', { name: topic.label, exact: true }).click();
+
+    await expect(page.getByText('Suggested topics:', { exact: true })).not.toBeVisible();
+
+    await waitForAgentResponse(page);
+    // Confirms they don't quietly reappear once the response finishes rendering either.
+    await expect(page.getByText('Suggested topics:', { exact: true })).not.toBeVisible();
+  });
+
+  test('7. Log in and Sign Up are present and navigate correctly at mobile width', async ({ page }) => {
+    // A single page.goto() at project-default (desktop) viewport already ran in
+    // beforeEach; resizing here just re-triggers the responsive layout without a fresh
+    // navigation, since it's a CSS reflow, not a state change the app needs to reload for.
+    await page.setViewportSize({ width: 375, height: 812 });
+
+    await expect(page.getByTestId('log-in-button')).toBeVisible();
+    await expect(page.getByTestId('sign-up-button')).toBeVisible();
+
+    await page.getByTestId('log-in-button').click();
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByTestId('login-title-heading')).toBeVisible();
+
+    await page.goBack();
+    await expect(page.getByTestId('sign-up-button')).toBeVisible();
+    await page.getByTestId('sign-up-button').click();
+    await expect(page).toHaveURL(/\/register$/);
+    await expect(page.getByTestId('register-title-heading')).toBeVisible();
+  });
+
+  test('8. agent reply renders as a distinct agent-side bubble, not a user-side one', async ({ page }) => {
+    const input = page.getByTestId(AGENT_INPUT);
+    await input.fill('What is Permission.ai?');
+    await input.press('Enter');
+    await waitForAgentResponse(page);
+
+    // Beyond what tests 2/3 already check (a bubble matching the agent selector exists with
+    // real content), this confirms the two bubbles are genuinely rendered on opposite
+    // sides -- agent left-aligned (`justify-start`), user right-aligned (`justify-end`) --
+    // rather than just trusting that two differently-named locators each found something.
+    // A layout regression that kept both messages under the same alignment class would slip
+    // past a pure count-based check but not this one.
+    //
+    // Important: we measure the *inner* bubble (the direct child), not the outer
+    // `justify-start`/`justify-end` wrapper itself. The wrapper is a full-width flex row --
+    // `justify-content` only positions its child within it, so both wrappers' own bounding
+    // boxes start at the same left edge regardless of alignment (confirmed by hand: this
+    // was the first version of this assertion, and it failed by comparing two identical x
+    // values). The inner child is what actually moves left/right.
+    const agentBox = await agentBubbles(page).last().locator('> div').first().boundingBox();
+    const userBox = await userBubbles(page).last().locator('> div').first().boundingBox();
+    expect(agentBox).not.toBeNull();
+    expect(userBox).not.toBeNull();
+    expect(agentBox!.x).toBeLessThan(userBox!.x);
+  });
 });
