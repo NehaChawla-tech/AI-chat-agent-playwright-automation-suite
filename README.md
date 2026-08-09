@@ -60,15 +60,15 @@ With another day: GitHub Actions with each browser as its own job, gating merges
 
 ## Submission checklist
 
-- [ ] Repo named `sqa-homework-neha-chawla`, default branch `main`
-- [ ] README includes exact setup and run commands, verified from a clean clone
-- [ ] README ≤500 words
-- [ ] Max 8 tests, all 4 required behaviours covered
-- [ ] `artifacts/assertions.md`
-- [ ] Assertion wired into an evaluation framework and running
-- [ ] `artifacts/ux-review.md`
-- [ ] `artifacts/data-checks.md`
-- [ ] `artifacts/ai-workflow.md`
-- [ ] `artifacts/report/`
-- [ ] `artifacts/demo.mp4`
-- [ ] Commit history shows how the work evolved
+- [x] Repo named `sqa-homework-neha-chawla`, default branch `main`
+- [x] README includes exact setup and run commands, verified from a clean clone
+- [x] README ≤500 words
+- [x] Max 8 tests, all 4 required behaviours covered
+- [x] `artifacts/assertions.md`
+- [x] Assertion wired into an evaluation framework and running
+- [x] `artifacts/ux-review.md`
+- [x] `artifacts/data-checks.md`
+- [x] `artifacts/ai-workflow.md`
+- [x] `artifacts/report/`
+- [x] `artifacts/demo.mp4`
+- [x] Commit history shows how the work evolved
