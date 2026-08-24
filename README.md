@@ -1,11 +1,12 @@
-# sqa-homework-neha-chawla
+# ai-chat-agent-playwright-automation-suite
 
 Test suite and review for the pre-login agent at [ask.permission.ai](https://ask.permission.ai).
 
 ## Setup
 
 ```bash
-git clone <repo-url> && cd sqa-homework-neha-chawla
+git clone <repo-url> && cd ai-chat-agent-playwright-automation-suite
+
 npm install
 npx playwright install
 ```
@@ -60,7 +61,7 @@ With another day: GitHub Actions with each browser as its own job, gating merges
 
 ## Submission checklist
 
-- [x] Repo named `sqa-homework-neha-chawla`, default branch `main`
+- [x] Repo named `ai-chat-agent-playwright-automation-suite`, default branch `main`
 - [x] README includes exact setup and run commands, verified from a clean clone
 - [x] README ≤500 words
 - [x] Max 8 tests, all 4 required behaviours covered
